@@ -13,7 +13,8 @@ const conversationState = {
     dietaryPreference: null,   // Stores: 'veg', 'non-veg', 'egg-veg', 'vegan'
     allergies: null,           // Stores allergy info or 'none'
     lastIntent: null,          // Tracks detected intent (e.g., 'food_question')
-    originalQuestion: null     // Stores the original user question for context
+    originalQuestion: null,    // Stores the original user question for context
+    dislikedFoods: []          // Track foods user doesn't like
 };
 
 // ============================================
@@ -169,6 +170,14 @@ const foodDatabase = {
             carbs: 7,
             fat: 16,
             servingSize: "2 tbsp (32g)"
+        },
+        {
+            name: "Whey Protein Powder",
+            kcal: 120,
+            protein: 24,
+            carbs: 3,
+            fat: 1,
+            servingSize: "1 scoop (30g)"
         }
     ],
     nonVegetarian: [
@@ -255,8 +264,8 @@ const foodDatabase = {
     ]
 };
 
-// Filter food list based on dietary preferences and allergies
-function getFilteredFoodList(dietaryPreference, allergies) {
+// Filter food list based on dietary preferences, allergies, and dislikes
+function getFilteredFoodList(dietaryPreference, allergies, dislikedFoods = []) {
     let availableFoods = [];
 
     // Filter by dietary preference
@@ -297,6 +306,16 @@ function getFilteredFoodList(dietaryPreference, allergies) {
         availableFoods = availableFoods.filter(food => {
             const foodNameLower = food.name.toLowerCase();
             return !allergyKeywords.some(allergen => foodNameLower.includes(allergen));
+        });
+    }
+
+    // Filter out disliked foods
+    if (dislikedFoods.length > 0) {
+        availableFoods = availableFoods.filter(food => {
+            return !dislikedFoods.some(disliked =>
+                food.name.toLowerCase().includes(disliked.toLowerCase()) ||
+                disliked.toLowerCase().includes(food.name.toLowerCase())
+            );
         });
     }
 
@@ -462,6 +481,38 @@ function askSuggestion(question) {
 }
 
 // ============================================
+// Detect Food Dislike
+// ============================================
+function detectFoodDislike(message) {
+    const dislikePatterns = [
+        /(?:i )?don'?t like (.+)/i,
+        /(?:i )?hate (.+)/i,
+        /(?:i )?can'?t stand (.+)/i,
+        /(?:i )?don'?t want (.+)/i,
+        /(?:i'm|i am) not a fan of (.+)/i,
+        /(?:i )?dislike (.+)/i,
+        /not (.+)/i,
+        /avoid (.+)/i,
+        /skip (.+)/i,
+        /without (.+)/i,
+        /except (.+)/i,
+        /remove (.+)/i
+    ];
+
+    for (const pattern of dislikePatterns) {
+        const match = message.match(pattern);
+        if (match && match[1]) {
+            const foodName = match[1].trim();
+            // Clean up common suffixes
+            const cleaned = foodName.replace(/\s+(please|plz|thanks|thank you)$/i, '').trim();
+            return cleaned;
+        }
+    }
+
+    return null;
+}
+
+// ============================================
 // Send Message
 // ============================================
 async function sendMessage() {
@@ -491,6 +542,50 @@ async function sendMessage() {
 
     // Add to history
     chatHistory.push({ role: 'user', message, timestamp: Date.now() });
+
+    // Check if user is expressing a food dislike
+    const dislikedFood = detectFoodDislike(message);
+    if (dislikedFood && conversationState.dietaryPreference) {
+        // User is expressing a dislike for a food
+        if (!conversationState.dislikedFoods.includes(dislikedFood)) {
+            conversationState.dislikedFoods.push(dislikedFood);
+            console.log('🚫 Added to disliked foods:', dislikedFood);
+        }
+
+        // Regenerate food recommendations without the disliked food
+        conversationState.lastIntent = 'food_dislike';
+        conversationState.originalQuestion = 'What foods should I eat to hit my protein goal?';
+
+        const prompt = buildFoodPrompt(
+            conversationState.dietaryPreference,
+            conversationState.allergies,
+            conversationState.originalQuestion
+        );
+
+        conversationState.messages.push({ role: 'user', content: message });
+
+        showTypingIndicator();
+
+        try {
+            const response = await callAI(prompt);
+            hideTypingIndicator();
+            displayMessage('ai', response);
+
+            conversationState.messages.push({ role: 'assistant', content: response });
+            chatHistory.push({ role: 'ai', message: response, timestamp: Date.now() });
+
+            if (conversationState.messages.length > 20) {
+                conversationState.messages = conversationState.messages.slice(-20);
+            }
+        } catch (error) {
+            hideTypingIndicator();
+            handleError(error);
+        } finally {
+            isProcessing = false;
+            chatInput.focus();
+        }
+        return;
+    }
 
     // Check if we're in middle of dietary preference collection
     if (conversationState.awaitingResponse) {
@@ -695,13 +790,13 @@ Please provide advice tailored to this specific profile.`;
 // Build Food List Context for AI
 // ============================================
 function buildFoodListContext(dietaryPreference, allergies) {
-    const foods = getFilteredFoodList(dietaryPreference, allergies);
+    const foods = getFilteredFoodList(dietaryPreference, allergies, conversationState.dislikedFoods);
 
     if (foods.length === 0) {
         return "No specific foods available for your dietary restrictions.";
     }
 
-    let context = "AVAILABLE FOOD LIST (prioritize these in your recommendations):\n\n";
+    let context = "AVAILABLE FOOD LIST (use these for recommendations):\n\n";
 
     foods.forEach((food, index) => {
         context += `${index + 1}. ${food.name} (${food.servingSize})\n`;
@@ -1160,6 +1255,7 @@ async function generateFoodRecommendation() {
     console.log('🔷 Dietary preference:', conversationState.dietaryPreference);
     console.log('🔷 Allergies:', conversationState.allergies);
     console.log('🔷 Original question:', conversationState.originalQuestion);
+    console.log('🔷 Disliked foods:', conversationState.dislikedFoods);
 
     showTypingIndicator();
 
@@ -1217,6 +1313,21 @@ function buildFoodPrompt(dietary, allergies, userQuestion = '') {
     const goalText = userData.goal === 'weight_loss' ? 'Weight Loss' :
                      userData.goal === 'weight_gain' ? 'Weight Gain' : 'Stay Healthy (Maintenance)';
 
+    // Calculate target protein with tolerance
+    const proteinTarget = calculatedMetrics.protein;
+    const proteinMin = Math.round(proteinTarget * 0.95);
+    const proteinMax = Math.round(proteinTarget * 1.05);
+
+    // Build disliked foods context
+    let dislikedContext = '';
+    if (conversationState.dislikedFoods.length > 0) {
+        dislikedContext = `\n**FOODS USER DISLIKES (EXCLUDED FROM AVAILABLE LIST):**\n`;
+        conversationState.dislikedFoods.forEach(food => {
+            dislikedContext += `- ${food}\n`;
+        });
+        dislikedContext += '\n';
+    }
+
     // Detect if user is asking for food recommendations vs meal plan
     const questionLower = userQuestion.toLowerCase();
     const isFoodListQuestion = questionLower.includes('what') &&
@@ -1230,36 +1341,74 @@ function buildFoodPrompt(dietary, allergies, userQuestion = '') {
     let prompt;
 
     if (isFoodListQuestion || isSimpleFoodQuestion) {
-        // User wants food recommendations, not a full meal plan
-        prompt = `Based on my question, suggest HIGH-PROTEIN foods to help me hit my protein target.
+        // User wants food recommendations with EXACT protein calculations
+        prompt = `You are a precision nutrition coach. Calculate EXACT quantities of high-protein foods to hit the user's protein target.
 
 MY PROFILE:
 - Dietary Preference: ${getDietaryLabel(dietary)}
 - ${allergyText}
-- Daily Protein Target: ${calculatedMetrics.protein}g
-
+- **PROTEIN TARGET: ${proteinTarget}g (must be within ${proteinMin}g - ${proteinMax}g)**
+${dislikedContext}
 ${foodListContext}
 
-INSTRUCTIONS:
-1. **DO NOT create a meal plan**. Only list 5-6 HIGH-PROTEIN foods
-2. **PRIORITIZE foods from the Available Food List above** with highest protein content
-3. **IMPORTANT**: Pick only ONE food from each category (e.g., if listing paneer, pick ONLY the highest protein paneer and skip other paneer varieties. If listing yogurt, pick ONLY the highest protein yogurt and skip others)
-4. Ensure variety - no two foods should be similar types (don't list 2 yogurts, 2 paneers, 2 dals, etc.)
-5. List foods in order of protein density (protein per 100g)
-6. For each food, show: Name, protein content per serving, and why it's good for hitting protein targets
-7. Keep response very concise - just the food list with brief explanations
-8. DO NOT include product links or URLs
+**CRITICAL PROTEIN CALCULATION RULES:**
 
-FORMAT EXAMPLE:
-Here are the best high-protein foods to hit your ${calculatedMetrics.protein}g protein target:
+1. **CALCULATE EXACT QUANTITIES** to hit the protein target within ±5%
+2. **SHOW CALCULATIONS** for each food item with exact serving size
+3. **SUM TOTAL PROTEIN** at the end and verify it's within ${proteinMin}g - ${proteinMax}g
+4. **ADJUST QUANTITIES** if total protein is outside the range
 
-**1. Milky Mist High Protein Paneer** - 25g protein per 100g
-Excellent protein source with low carbs
+**FOOD SELECTION RULES:**
 
-**2. Chicken Breast** - 31g protein per 100g
-Lean protein with minimal fat
+1. Use ONLY foods from the "AVAILABLE FOOD LIST" above
+2. Select 4-6 HIGH-PROTEIN foods (prioritize foods with >15g protein per 100g)
+3. Ensure variety - no two similar foods (e.g., don't list 2 yogurts or 2 paneers)
+4. When high-protein foods are excluded (from DISLIKES), **INCREASE QUANTITIES** of remaining high-protein foods to compensate
 
-Keep response under 200 words. Focus only on listing the foods.`;
+**CALCULATION METHOD:**
+
+For each food, calculate: (Protein Target ÷ Number of Foods) ÷ (Protein per 100g) × 100g = Serving Size
+
+**EXAMPLE (if protein target is 132.9g):**
+
+**Protein Distribution Plan (Total: 132.9g)**
+
+1. **Nutrela Soya Chunks (uncooked)** - 50g
+   - Protein: 26g (52g per 100g × 0.5)
+   - Calories: 175 kcal
+
+2. **Milky Mist High Protein Paneer** - 200g
+   - Protein: 50g (25g per 100g × 2)
+   - Calories: 408 kcal
+
+3. **Mill'D Protein Atta** - 60g
+   - Protein: 27.6g (46g per 100g × 0.6)
+   - Calories: 232 kcal
+
+4. **Briyas Tofu Soy Paneer** - 130g
+   - Protein: 20.3g (15.6g per 100g × 1.3)
+   - Calories: 182 kcal
+
+5. **Milky Mist Skyr Yogurt** - 75g
+   - Protein: 9g (12g per 100g × 0.75)
+   - Calories: 75 kcal
+
+**Total Protein: 132.9g ✓ (within ${proteinMin}g - ${proteinMax}g)**
+**Total Calories: 1,072 kcal**
+
+**RESPONSE FORMAT:**
+
+Start with acknowledgment if user excluded a food, then show:
+- Protein Distribution Plan with exact quantities
+- Protein calculation for each food
+- **Total Protein** (MUST be within ${proteinMin}g - ${proteinMax}g)
+- Total Calories
+
+**VERIFICATION STEP:**
+Before responding, calculate total protein. If outside ${proteinMin}g - ${proteinMax}g range, ADJUST quantities and recalculate.
+
+Keep response under 250 words. Focus on ACCURACY of protein calculations.`;
+
     } else {
         // User wants a full meal plan
         prompt = `Based on my question about food/meals, create a detailed daily meal plan.
@@ -1273,22 +1422,23 @@ MY PROFILE:
   * Protein: ${calculatedMetrics.protein}g
   * Fat: ${calculatedMetrics.fat}g
   * Carbohydrates: ${calculatedMetrics.carbs}g
-
+${dislikedContext}
 ${foodListContext}
 
 INSTRUCTIONS:
-1. **PRIORITIZE foods from the Available Food List above** - these have verified nutrition data
-2. Create a FULL DAY meal plan divided into: Breakfast, Lunch, Dinner, and Snacks (if needed)
-3. Specify EXACT quantities for each food item (use the serving sizes shown above as reference)
-4. Calculate and show macros for each meal in format: (Xg protein, Yg carbs, Zg fat, Z kcal)
-5. **CRITICAL MACRO REQUIREMENTS - Follow these strictly:**
+1. **DO NOT include any foods from the DISLIKES list**
+2. **PRIORITIZE foods from the Available Food List above** - these have verified nutrition data
+3. Create a FULL DAY meal plan divided into: Breakfast, Lunch, Dinner, and Snacks (if needed)
+4. Specify EXACT quantities for each food item (use the serving sizes shown above as reference)
+5. Calculate and show macros for each meal in format: (Xg protein, Yg carbs, Zg fat, Z kcal)
+6. **CRITICAL MACRO REQUIREMENTS - Follow these strictly:**
    - **PROTEIN**: Must be within 95-100% of target (${calculatedMetrics.protein}g). Minimum ${Math.round(calculatedMetrics.protein * 0.95)}g, maximum ${calculatedMetrics.protein}g
    - **FAT**: Must NOT exceed target (${calculatedMetrics.fat}g). Stay at or below this limit
    - **CARBS**: Must NOT exceed target (${calculatedMetrics.carbs}g). Stay at or below this limit
    - **TOTAL CALORIES**: Must NEVER exceed ${calculatedMetrics.dailyKcal} kcal. This is a hard limit
-6. DO NOT include any product links or URLs in your response
-7. If the food list items don't fully cover macro needs, you may suggest additional common Indian foods with estimated macros
-8. Prioritize hitting protein target first, then adjust fats and carbs to stay within calorie limit
+7. DO NOT include any product links or URLs in your response
+8. If the food list items don't fully cover macro needs, you may suggest additional common Indian foods with estimated macros
+9. Prioritize hitting protein target first, then adjust fats and carbs to stay within calorie limit
 
 FORMAT EXAMPLE:
 **Breakfast** (25g protein, 40g carbs, 15g fat, 380 kcal)
