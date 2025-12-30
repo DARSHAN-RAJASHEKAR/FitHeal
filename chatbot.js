@@ -360,12 +360,6 @@ function showChatbot() {
         return;
     }
 
-    // Check if API key is configured
-    if (!validateConfig()) {
-        console.warn('Chatbot disabled: API key not configured');
-        return;
-    }
-
     widget.classList.remove('hidden');
     widget.classList.add('visible');
 
@@ -881,18 +875,14 @@ async function callAI(userMessage, includeHistory = true) {
     console.log('🔷 Built messages array, total messages:', messages.length);
 
     const requestBody = {
-        model: CONFIG.MODEL_NAME,
         messages: messages,
-        temperature: CONFIG.TEMPERATURE,
-        max_tokens: CONFIG.MAX_TOKENS,
     };
 
-    console.log('🔷 Sending request to API...');
-    const response = await fetch(CONFIG.API_ENDPOINT, {
+    console.log('🔷 Sending request to Netlify Function...');
+    const response = await fetch('/.netlify/functions/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${CONFIG.API_KEY}`
         },
         body: JSON.stringify(requestBody)
     });
@@ -901,8 +891,7 @@ async function callAI(userMessage, includeHistory = true) {
 
     if (!response.ok) {
         const error = await response.json();
-        console.error('❌ API error:', error);
-        throw new Error(error.error?.message || 'API request failed');
+        throw new Error(error.error?.message || error.message || 'API request failed');
     }
 
     const data = await response.json();

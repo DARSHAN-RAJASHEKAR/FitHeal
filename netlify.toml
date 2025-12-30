@@ -1,0 +1,9 @@
+[build]
+  command = "echo 'Static site - no build step needed'"
+  publish = "."
+  functions = "netlify/function"
+
+[dev]
+  port = 8888
+  publish = "."
+  functions = "netlify/function"
