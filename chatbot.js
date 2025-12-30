@@ -17,6 +17,293 @@ const conversationState = {
 };
 
 // ============================================
+// Food Database
+// ============================================
+const foodDatabase = {
+    vegetarian: [
+        {
+            name: "Milky Mist Fresh Paneer",
+            kcal: 265,
+            protein: 18,
+            carbs: 3,
+            fat: 20,
+            servingSize: "100g",
+            link: "https://shop.milkymist.com/pn/fresh-paneer/pid/3519870"
+        },
+        {
+            name: "Milky Mist High Protein - Low Fat Paneer",
+            kcal: 204,
+            protein: 25,
+            carbs: 6,
+            fat: 9,
+            servingSize: "100g",
+            link: "https://shop.milkymist.com/pn/high-protien-paneer/pid/3892403"
+        },
+        {
+            name: "Mill'D Protein Atta",
+            kcal: 387,
+            protein: 46,
+            carbs: 45,
+            fat: 2,
+            servingSize: "100g",
+            link: "https://milld.com/products/milld-high-protein-atta-1kg?variant=50830533951704"
+        },
+        {
+            name: "Milky Mist Greek Yogurt Natural",
+            kcal: 74,
+            protein: 7,
+            carbs: 7,
+            fat: 2,
+            servingSize: "100g",
+            link: "https://shop.milkymist.com/pn/greek-yogurt-natural/pid/3519837"
+        },
+        {
+            name: "Milky Mist Skyr Yogurt",
+            kcal: 100,
+            protein: 12,
+            carbs: 10,
+            fat: 2,
+            servingSize: "100g",
+            link: "https://shop.milkymist.com/pn/skyr-yogurt/pid/3519887"
+        },
+        {
+            name: "Athena Greek Yogurt High Protein",
+            kcal: 99,
+            protein: 11,
+            carbs: 6,
+            fat: 4,
+            servingSize: "100g",
+            link: "https://www.athenaprotein.com/products/high-protein-plain"
+        },
+        {
+            name: "Masoor Dal Whole (cooked)",
+            kcal: 115,
+            protein: 8,
+            carbs: 20,
+            fat: 0,
+            servingSize: "100g",
+            link: "https://www.tatanutrikorner.com/products/tata-sampann-masoor-dal-whole"
+        },
+        {
+            name: "Moong Dal (cooked)",
+            kcal: 110,
+            protein: 8,
+            carbs: 19,
+            fat: 0,
+            servingSize: "100g",
+            link: "https://www.tatanutrikorner.com/products/tata-sampann-moong-dal"
+        },
+        {
+            name: "Urad Dal Kali (cooked)",
+            kcal: 112,
+            protein: 8,
+            carbs: 20,
+            fat: 1,
+            servingSize: "100g",
+            link: "https://www.tatanutrikorner.com/products/tata-sampann-urad-dal-kali"
+        },
+        {
+            name: "Kabuli Chana (cooked)",
+            kcal: 123,
+            protein: 8,
+            carbs: 21,
+            fat: 2,
+            servingSize: "100g",
+            link: "https://www.tatanutrikorner.com/products/tata-sampann-kabooli-chana"
+        },
+        {
+            name: "Organic Red Rajma (cooked)",
+            kcal: 123,
+            protein: 8,
+            carbs: 21,
+            fat: 1,
+            servingSize: "100g",
+            link: "https://www.tatanutrikorner.com/products/tata-sampann-organic-red-rajma"
+        },
+        {
+            name: "Briyas Tofu Soy Paneer",
+            kcal: 140,
+            protein: 15.6,
+            carbs: 7,
+            fat: 5,
+            servingSize: "100g",
+            link: "https://shop.milkymist.com/pn/tofu-soy-paneer/pid/3519776"
+        },
+        {
+            name: "Nutrela Soya Chunks (uncooked)",
+            kcal: 350,
+            protein: 52,
+            carbs: 33,
+            fat: 0.5,
+            servingSize: "100g",
+            link: "https://mynutrela.com/soya-chunks/"
+        },
+        {
+            name: "Quinoa (cooked)",
+            kcal: 120,
+            protein: 4,
+            carbs: 21,
+            fat: 2,
+            servingSize: "100g"
+        },
+        {
+            name: "Almonds",
+            kcal: 170,
+            protein: 6,
+            carbs: 6,
+            fat: 15,
+            servingSize: "30g"
+        },
+        {
+            name: "Milk",
+            kcal: 149,
+            protein: 8,
+            carbs: 12,
+            fat: 8,
+            servingSize: "1 cup (240ml)"
+        },
+        {
+            name: "Peanut Butter",
+            kcal: 188,
+            protein: 8,
+            carbs: 7,
+            fat: 16,
+            servingSize: "2 tbsp (32g)"
+        }
+    ],
+    nonVegetarian: [
+        {
+            name: "Chicken Breast",
+            kcal: 165,
+            protein: 31,
+            carbs: 0,
+            fat: 4,
+            servingSize: "100g"
+        },
+        {
+            name: "Eggs",
+            kcal: 72,
+            protein: 6,
+            carbs: 0,
+            fat: 5,
+            servingSize: "1 large"
+        },
+        {
+            name: "Salmon",
+            kcal: 208,
+            protein: 25,
+            carbs: 0,
+            fat: 13,
+            servingSize: "100g"
+        },
+        {
+            name: "Tuna",
+            kcal: 132,
+            protein: 30,
+            carbs: 0,
+            fat: 1,
+            servingSize: "100g"
+        },
+        {
+            name: "Turkey Breast",
+            kcal: 135,
+            protein: 29,
+            carbs: 0,
+            fat: 1,
+            servingSize: "100g"
+        },
+        {
+            name: "Prawns",
+            kcal: 99,
+            protein: 24,
+            carbs: 0,
+            fat: 0,
+            servingSize: "100g"
+        },
+        {
+            name: "Fish (Tilapia)",
+            kcal: 129,
+            protein: 26,
+            carbs: 0,
+            fat: 3,
+            servingSize: "100g"
+        },
+        {
+            name: "Lamb",
+            kcal: 294,
+            protein: 25,
+            carbs: 0,
+            fat: 21,
+            servingSize: "100g"
+        },
+        {
+            name: "Lean Beef",
+            kcal: 250,
+            protein: 26,
+            carbs: 0,
+            fat: 17,
+            servingSize: "100g"
+        },
+        {
+            name: "Pork Chop",
+            kcal: 231,
+            protein: 27,
+            carbs: 0,
+            fat: 13,
+            servingSize: "100g"
+        }
+    ]
+};
+
+// Filter food list based on dietary preferences and allergies
+function getFilteredFoodList(dietaryPreference, allergies) {
+    let availableFoods = [];
+
+    // Filter by dietary preference
+    if (dietaryPreference === 'veg') {
+        // Vegetarian: only vegetarian foods, exclude eggs
+        availableFoods = [...foodDatabase.vegetarian];
+    } else if (dietaryPreference === 'egg-veg') {
+        // Egg-vegetarian: vegetarian foods + eggs
+        availableFoods = [...foodDatabase.vegetarian];
+        const eggs = foodDatabase.nonVegetarian.find(food => food.name === 'Eggs');
+        if (eggs) {
+            availableFoods.push(eggs);
+        }
+    } else if (dietaryPreference === 'non-veg') {
+        // Non-vegetarian: vegetarian foods + chicken + eggs only
+        availableFoods = [...foodDatabase.vegetarian];
+
+        // Add only chicken and eggs from non-veg options
+        const chicken = foodDatabase.nonVegetarian.find(food => food.name === 'Chicken Breast');
+        const eggs = foodDatabase.nonVegetarian.find(food => food.name === 'Eggs');
+
+        if (chicken) availableFoods.push(chicken);
+        if (eggs) availableFoods.push(eggs);
+    } else if (dietaryPreference === 'vegan') {
+        // Vegan: exclude all dairy, eggs, and animal products
+        availableFoods = foodDatabase.vegetarian.filter(food => {
+            const nameLower = food.name.toLowerCase();
+            return !nameLower.includes('paneer') &&
+                   !nameLower.includes('yogurt') &&
+                   !nameLower.includes('milk') &&
+                   !nameLower.includes('dairy');
+        });
+    }
+
+    // Filter out allergens
+    if (allergies && allergies !== 'none') {
+        const allergyKeywords = allergies.toLowerCase().split(',').map(a => a.trim());
+        availableFoods = availableFoods.filter(food => {
+            const foodNameLower = food.name.toLowerCase();
+            return !allergyKeywords.some(allergen => foodNameLower.includes(allergen));
+        });
+    }
+
+    return availableFoods;
+}
+
+// ============================================
 // Initialize Chatbot
 // ============================================
 function initializeChatbot() {
