@@ -430,19 +430,22 @@ function resetForm() {
     const goal = document.getElementById('goal').value;
     const hipGroup = document.getElementById('hipGroup');
     const rateGroup = document.getElementById('rateGroup');
-    
+    const rateSelect = document.getElementById('rate');
+
     if (gender !== 'female') {
         hipGroup.style.display = 'none';
     } else {
         hipGroup.style.display = 'flex';
     }
-    
+
     if (goal !== 'weight_loss' && goal !== 'weight_gain') {
         rateGroup.style.display = 'none';
+        rateSelect.removeAttribute('required');
     } else {
         rateGroup.style.display = 'flex';
+        rateSelect.setAttribute('required', 'required');
     }
-    
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -460,12 +463,16 @@ document.getElementById('gender').addEventListener('change', function() {
 // Show/hide rate field based on goal
 document.getElementById('goal').addEventListener('change', function() {
     const rateGroup = document.getElementById('rateGroup');
+    const rateSelect = document.getElementById('rate');
+
     if (this.value === 'weight_loss' || this.value === 'weight_gain') {
         rateGroup.style.display = 'flex';
+        rateSelect.setAttribute('required', 'required');
     } else {
         // Hide rate group for stay_healthy and empty selection
         rateGroup.style.display = 'none';
-        document.getElementById('rate').value = '';
+        rateSelect.removeAttribute('required');
+        rateSelect.value = '';
     }
 });
 
@@ -475,13 +482,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const goal = document.getElementById('goal').value;
     const hipGroup = document.getElementById('hipGroup');
     const rateGroup = document.getElementById('rateGroup');
-    
+    const rateSelect = document.getElementById('rate');
+
     if (gender !== 'female') {
         hipGroup.style.display = 'none';
     }
 
     if (goal !== 'weight_loss' && goal !== 'weight_gain') {
         rateGroup.style.display = 'none';
+        rateSelect.removeAttribute('required');
     }
 });
 
