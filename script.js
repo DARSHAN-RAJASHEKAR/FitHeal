@@ -1,5 +1,14 @@
 // Fitness Calculator Functions
 
+// ============================================
+// Global State for AI Chatbot
+// ============================================
+const fitnessContext = {
+    userData: null,
+    calculatedMetrics: null,
+    isCalculated: false
+};
+
 // Calculate BMI (Body Mass Index)
 function calculateBMI(weight, height) {
     // BMI = weight (kg) / (height (m))^2
@@ -412,8 +421,37 @@ document.getElementById('fitnessForm').addEventListener('submit', function(e) {
     const fat = calculateFat(dailyKcal);
     const carbs = calculateCarbs(dailyKcal, protein, fat);
 
+    // Store fitness data for AI chatbot
+    fitnessContext.userData = {
+        age,
+        gender,
+        weight,
+        height,
+        activityLevel,
+        goal,
+        rate
+    };
+    fitnessContext.calculatedMetrics = {
+        bmi,
+        bmr,
+        tdee,
+        bodyFatPercent,
+        bodyFatMethod,
+        lbmFromBodyFat,
+        dailyKcal,
+        protein,
+        fat,
+        carbs
+    };
+    fitnessContext.isCalculated = true;
+
     // Display results
     displayResults(bmi, bmr, tdee, lbmBoer, lbmFromBodyFat, weight, bodyFatPercent, bodyFatKg, dailyKcal, goal, rate, protein, fat, carbs, bodyFatMethod);
+
+    // Show chatbot after calculation
+    if (typeof showChatbot === 'function') {
+        showChatbot();
+    }
 
     // Scroll to results
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -444,6 +482,16 @@ function resetForm() {
     } else {
         rateGroup.style.display = 'flex';
         rateSelect.setAttribute('required', 'required');
+    }
+
+    // Reset chatbot context
+    fitnessContext.userData = null;
+    fitnessContext.calculatedMetrics = null;
+    fitnessContext.isCalculated = false;
+
+    // Hide chatbot if it exists
+    if (typeof hideChatbot === 'function') {
+        hideChatbot();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });

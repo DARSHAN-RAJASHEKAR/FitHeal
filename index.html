@@ -551,7 +551,30 @@
         </div>
     </div>
 
+    <!-- AI Chatbot Widget -->
+    <div id="chatbot-widget" class="chatbot-widget hidden">
+        <div class="chat-header">
+            <span class="chat-title">💬 AI Fitness Coach</span>
+            <button class="chat-minimize-btn" aria-label="Minimize chat">−</button>
+        </div>
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
+        <div class="chat-input-area">
+            <input
+                type="text"
+                id="chatInput"
+                placeholder="Ask about your fitness plan..."
+                maxlength="500"
+                aria-label="Chat message input"
+            >
+            <button id="chatSendBtn" aria-label="Send message">
+                <span>Send</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
     <script src="script.js"></script>
+    <script src="chatbot.js"></script>
 </body>
 </html>
 
