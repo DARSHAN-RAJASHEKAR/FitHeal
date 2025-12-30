@@ -1,5 +1,5 @@
 // ============================================
-// AI Fitness Chatbot - Powered by Groq AI
+// AI Fitness Chatbot - Powered by OpenRouter (DeepSeek-V3)
 // ============================================
 
 // Chat history storage (session only)
@@ -12,7 +12,8 @@ const conversationState = {
     awaitingResponse: null,    // Tracks state: 'dietary_preference', 'allergies', or null
     dietaryPreference: null,   // Stores: 'veg', 'non-veg', 'egg-veg', 'vegan'
     allergies: null,           // Stores allergy info or 'none'
-    lastIntent: null           // Tracks detected intent (e.g., 'food_question')
+    lastIntent: null,          // Tracks detected intent (e.g., 'food_question')
+    originalQuestion: null     // Stores the original user question for context
 };
 
 // ============================================
@@ -239,6 +240,7 @@ async function sendMessage() {
     if (detectFoodIntent(message) && !conversationState.dietaryPreference) {
         // This is a food question and we don't have dietary preferences yet
         conversationState.lastIntent = 'food_question';
+        conversationState.originalQuestion = message;  // Store the original question
         askDietaryPreference();
         isProcessing = false;
         return;
@@ -246,7 +248,8 @@ async function sendMessage() {
         // Food question but we already have preferences - use them
         const prompt = buildFoodPrompt(
             conversationState.dietaryPreference,
-            conversationState.allergies
+            conversationState.allergies,
+            message
         );
 
         // Add original question to conversation
@@ -256,7 +259,7 @@ async function sendMessage() {
         showTypingIndicator();
 
         try {
-            const response = await callGroqAPI(prompt);
+            const response = await callAI(prompt);
             hideTypingIndicator();
             displayMessage('ai', response);
 
@@ -283,8 +286,8 @@ async function sendMessage() {
         // Add user message to conversation state
         conversationState.messages.push({ role: 'user', content: message });
 
-        // Call Groq API with conversation history
-        const response = await callGroqAPI(message);
+        // Call AI API with conversation history
+        const response = await callAI(message);
 
         // Hide typing indicator
         hideTypingIndicator();
@@ -402,6 +405,31 @@ Please provide advice tailored to this specific profile.`;
 }
 
 // ============================================
+// Build Food List Context for AI
+// ============================================
+function buildFoodListContext(dietaryPreference, allergies) {
+    const foods = getFilteredFoodList(dietaryPreference, allergies);
+
+    if (foods.length === 0) {
+        return "No specific foods available for your dietary restrictions.";
+    }
+
+    let context = "AVAILABLE FOOD LIST (prioritize these in your recommendations):\n\n";
+
+    foods.forEach((food, index) => {
+        context += `${index + 1}. ${food.name} (${food.servingSize})\n`;
+        context += `   - Calories: ${food.kcal} kcal\n`;
+        context += `   - Protein: ${food.protein}g | Carbs: ${food.carbs}g | Fat: ${food.fat}g\n`;
+        if (food.link) {
+            context += `   - Product Link: ${food.link}\n`;
+        }
+        context += '\n';
+    });
+
+    return context;
+}
+
+// ============================================
 // Detect Food-Related Questions
 // ============================================
 function detectFoodIntent(message) {
@@ -435,10 +463,10 @@ function detectFoodIntent(message) {
 }
 
 // ============================================
-// Call Groq API
+// Call AI API (OpenRouter / DeepSeek)
 // ============================================
-async function callGroqAPI(userMessage, includeHistory = true) {
-    console.log('🔷 callGroqAPI called with message:', userMessage.substring(0, 100) + '...');
+async function callAI(userMessage, includeHistory = true) {
+    console.log('🔷 callAI called with message:', userMessage.substring(0, 100) + '...');
     console.log('🔷 includeHistory:', includeHistory);
     console.log('🔷 conversationState.messages.length:', conversationState.messages.length);
 
@@ -482,7 +510,7 @@ async function callGroqAPI(userMessage, includeHistory = true) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${CONFIG.GROQ_API_KEY}`
+            'Authorization': `Bearer ${CONFIG.API_KEY}`
         },
         body: JSON.stringify(requestBody)
     });
@@ -844,13 +872,15 @@ async function generateFoodRecommendation() {
     console.log('🔷 generateFoodRecommendation started');
     console.log('🔷 Dietary preference:', conversationState.dietaryPreference);
     console.log('🔷 Allergies:', conversationState.allergies);
+    console.log('🔷 Original question:', conversationState.originalQuestion);
 
     showTypingIndicator();
 
     // Build enhanced prompt with dietary preferences
     const prompt = buildFoodPrompt(
         conversationState.dietaryPreference,
-        conversationState.allergies
+        conversationState.allergies,
+        conversationState.originalQuestion || ''
     );
 
     console.log('🔷 Built prompt for API call');
@@ -860,8 +890,8 @@ async function generateFoodRecommendation() {
         conversationState.messages.push({ role: 'user', content: prompt });
         console.log('🔷 Added prompt to conversation history');
 
-        console.log('🔷 Calling Groq API...');
-        const response = await callGroqAPI(prompt);
+        console.log('🔷 Calling AI API...');
+        const response = await callAI(prompt);
         console.log('🔷 Received response from API:', response.substring(0, 100) + '...');
 
         hideTypingIndicator();
@@ -892,22 +922,95 @@ async function generateFoodRecommendation() {
 }
 
 // Build Food Prompt with Preferences
-function buildFoodPrompt(dietary, allergies) {
+function buildFoodPrompt(dietary, allergies, userQuestion = '') {
     const allergyText = allergies === 'none' ? 'No allergies' : `Allergies: ${allergies}`;
+    const foodListContext = buildFoodListContext(dietary, allergies);
+    const { userData, calculatedMetrics } = fitnessContext;
 
-    const prompt = `Based on my question about food/meals, please provide personalized recommendations.
+    const goalText = userData.goal === 'weight_loss' ? 'Weight Loss' :
+                     userData.goal === 'weight_gain' ? 'Weight Gain' : 'Stay Healthy (Maintenance)';
 
-My dietary preference: ${getDietaryLabel(dietary)}
-${allergyText}
+    // Detect if user is asking for food recommendations vs meal plan
+    const questionLower = userQuestion.toLowerCase();
+    const isFoodListQuestion = questionLower.includes('what') &&
+                              (questionLower.includes('food') || questionLower.includes('eat')) &&
+                              (questionLower.includes('protein') || questionLower.includes('hit'));
 
-Please suggest specific foods or meal ideas that:
-1. Match my dietary preference (${getDietaryLabel(dietary)})
-2. Avoid my allergens
-3. Help me reach my ${fitnessContext.userData.goal} goal
-4. Meet my macro targets (${fitnessContext.calculatedMetrics.protein}g protein, ${fitnessContext.calculatedMetrics.fat}g fat, ${fitnessContext.calculatedMetrics.carbs}g carbs)
-5. Fit my daily calorie target of ${fitnessContext.calculatedMetrics.dailyKcal} kcal
+    const isSimpleFoodQuestion = questionLower.includes('what food') ||
+                                 questionLower.includes('which food') ||
+                                 (questionLower.includes('what') && questionLower.includes('should i eat'));
 
-Keep it concise and practical with specific food examples.`;
+    let prompt;
+
+    if (isFoodListQuestion || isSimpleFoodQuestion) {
+        // User wants food recommendations, not a full meal plan
+        prompt = `Based on my question, suggest HIGH-PROTEIN foods to help me hit my protein target.
+
+MY PROFILE:
+- Dietary Preference: ${getDietaryLabel(dietary)}
+- ${allergyText}
+- Daily Protein Target: ${calculatedMetrics.protein}g
+
+${foodListContext}
+
+INSTRUCTIONS:
+1. **DO NOT create a meal plan**. Only list 5-6 HIGH-PROTEIN foods
+2. **PRIORITIZE foods from the Available Food List above** with highest protein content
+3. **IMPORTANT**: Pick only ONE food from each category (e.g., if listing paneer, pick ONLY the highest protein paneer and skip other paneer varieties. If listing yogurt, pick ONLY the highest protein yogurt and skip others)
+4. Ensure variety - no two foods should be similar types (don't list 2 yogurts, 2 paneers, 2 dals, etc.)
+5. List foods in order of protein density (protein per 100g)
+6. For each food, show: Name, protein content per serving, and why it's good for hitting protein targets
+7. Keep response very concise - just the food list with brief explanations
+8. DO NOT include product links or URLs
+
+FORMAT EXAMPLE:
+Here are the best high-protein foods to hit your ${calculatedMetrics.protein}g protein target:
+
+**1. Milky Mist High Protein Paneer** - 25g protein per 100g
+Excellent protein source with low carbs
+
+**2. Chicken Breast** - 31g protein per 100g
+Lean protein with minimal fat
+
+Keep response under 200 words. Focus only on listing the foods.`;
+    } else {
+        // User wants a full meal plan
+        prompt = `Based on my question about food/meals, create a detailed daily meal plan.
+
+MY PROFILE:
+- Dietary Preference: ${getDietaryLabel(dietary)}
+- ${allergyText}
+- Fitness Goal: ${goalText}
+- Daily Calorie Target: ${calculatedMetrics.dailyKcal} kcal
+- Daily Macro Targets:
+  * Protein: ${calculatedMetrics.protein}g
+  * Fat: ${calculatedMetrics.fat}g
+  * Carbohydrates: ${calculatedMetrics.carbs}g
+
+${foodListContext}
+
+INSTRUCTIONS:
+1. **PRIORITIZE foods from the Available Food List above** - these have verified nutrition data
+2. Create a FULL DAY meal plan divided into: Breakfast, Lunch, Dinner, and Snacks (if needed)
+3. Specify EXACT quantities for each food item (use the serving sizes shown above as reference)
+4. Calculate and show macros for each meal in format: (Xg protein, Yg carbs, Zg fat, Z kcal)
+5. **CRITICAL MACRO REQUIREMENTS - Follow these strictly:**
+   - **PROTEIN**: Must be within 95-100% of target (${calculatedMetrics.protein}g). Minimum ${Math.round(calculatedMetrics.protein * 0.95)}g, maximum ${calculatedMetrics.protein}g
+   - **FAT**: Must NOT exceed target (${calculatedMetrics.fat}g). Stay at or below this limit
+   - **CARBS**: Must NOT exceed target (${calculatedMetrics.carbs}g). Stay at or below this limit
+   - **TOTAL CALORIES**: Must NEVER exceed ${calculatedMetrics.dailyKcal} kcal. This is a hard limit
+6. DO NOT include any product links or URLs in your response
+7. If the food list items don't fully cover macro needs, you may suggest additional common Indian foods with estimated macros
+8. Prioritize hitting protein target first, then adjust fats and carbs to stay within calorie limit
+
+FORMAT EXAMPLE:
+**Breakfast** (25g protein, 40g carbs, 15g fat, 380 kcal)
+- 100g Milky Mist High Protein Paneer (25g protein, 6g carbs, 9g fat, 204 kcal)
+- 2 slices whole wheat bread (6g protein, 30g carbs, 2g fat, 160 kcal)
+- 1 tsp butter (0g protein, 0g carbs, 5g fat, 45 kcal)
+
+Keep response concise but complete. Focus on practical, achievable meals. Show total macros at the end.`;
+    }
 
     return prompt;
 }
@@ -922,9 +1025,9 @@ function handleError(error) {
 
     // Specific error messages
     if (error.message.includes('API_KEY_INVALID') || error.message.includes('API key not valid') || error.message.includes('Unauthorized')) {
-        errorMessage = '⚠️ Invalid API key. Please check your config.js file and ensure you have a valid Groq API key from https://console.groq.com';
+        errorMessage = '⚠️ Invalid API key. Please check your config.js file and ensure you have a valid OpenRouter API key from https://openrouter.ai/';
     } else if (error.message.includes('quota') || error.message.includes('RESOURCE_EXHAUSTED') || error.message.includes('rate_limit')) {
-        errorMessage = '⚠️ Rate limit exceeded. Please wait a moment and try again. Groq free tier has generous limits.';
+        errorMessage = '⚠️ Rate limit exceeded. Please wait a moment and try again.';
     } else if (error.message.includes('rate')) {
         errorMessage = '⚠️ Rate limit exceeded. Please wait a moment and try again.';
     } else if (error.message.includes('network') || error.message.includes('fetch')) {
