@@ -10,10 +10,16 @@ body {
     min-height: 100vh;
     padding: 20px;
     color: #333;
+    overflow-x: hidden;
+}
+
+html {
+    overflow-x: hidden;
 }
 
 .container {
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -44,7 +50,7 @@ header h1 {
 
 .fitness-form {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -69,14 +75,34 @@ header h1 {
     font-size: 1rem;
     transition: all 0.3s ease;
     background: #f8f9fa;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Custom select dropdown arrow */
+.form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+    padding-right: 40px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: #667eea;
-    background: white;
+    background-color: white;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Ensure select arrow stays visible on focus */
+.form-group select:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
 }
 
 .form-divider {
@@ -546,7 +572,7 @@ header h1 {
 
 .food-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
     gap: 30px;
     margin-bottom: 30px;
 }
@@ -689,9 +715,309 @@ header h1 {
     border: 1.5px solid #f39c12;
 }
 
+/* Tablets and smaller laptops */
+@media (max-width: 1024px) {
+    .calculator-section {
+        padding: 30px;
+    }
+}
+
+/* Tablets portrait */
 @media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+
+    header h1 {
+        font-size: 2.5rem;
+    }
+
+    .calculator-section {
+        padding: 25px;
+    }
+
     .food-grid {
         grid-template-columns: 1fr;
+    }
+
+    .food-list-section {
+        margin-top: 30px;
+        padding-top: 30px;
+    }
+
+    .food-list-section h3 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .food-category {
+        padding: 20px;
+    }
+
+    .category-header h4 {
+        font-size: 1.3rem;
+    }
+
+    .category-icon {
+        font-size: 1.5rem;
+    }
+
+    .food-item {
+        padding: 10px 12px;
+    }
+
+    .food-name {
+        font-size: 0.9rem;
+    }
+
+    .product-link-btn {
+        font-size: 0.75rem;
+        padding: 5px 12px;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .nutrition-item {
+        font-size: 0.8rem;
+        padding: 4px 7px;
+    }
+}
+
+/* Mobile landscape and small tablets */
+@media (max-width: 600px) {
+    body {
+        padding: 12px;
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .calculator-section {
+        padding: 20px;
+    }
+
+    .form-group input,
+    .form-group select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 12px 12px;
+    }
+
+    .form-group select {
+        padding-right: 35px;
+        background-position: right 10px center;
+    }
+
+    .food-category {
+        padding: 18px;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    header {
+        padding: 20px 5px;
+        margin-bottom: 20px;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 0.9rem;
+    }
+
+    .calculator-section {
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 11px 12px;
+    }
+
+    .form-group select {
+        padding-right: 35px;
+        background-position: right 10px center;
+        background-size: 11px;
+    }
+
+    input[type="number"],
+    select {
+        font-size: 16px;
+        padding: 11px 12px;
+    }
+
+    .calculate-btn,
+    .reset-btn {
+        font-size: 1rem;
+        padding: 13px;
+        border-radius: 8px;
+    }
+
+    .food-list-section {
+        margin-top: 25px;
+        padding-top: 25px;
+    }
+
+    .food-list-section h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    .food-category {
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .category-header {
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+    }
+
+    .category-header h4 {
+        font-size: 1.15rem;
+    }
+
+    .category-icon {
+        font-size: 1.4rem;
+    }
+
+    .food-items {
+        gap: 10px;
+    }
+
+    .food-item {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .food-header {
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .food-name {
+        font-size: 0.88rem;
+        line-height: 1.4;
+    }
+
+    .product-link-btn {
+        font-size: 0.72rem;
+        padding: 5px 10px;
+        min-width: 48px;
+        flex-shrink: 0;
+    }
+
+    .nutrition-values {
+        gap: 5px;
+    }
+
+    .nutrition-item {
+        font-size: 0.75rem;
+        padding: 3px 7px;
+    }
+
+    .food-grid {
+        gap: 15px;
+    }
+}
+
+/* Very small devices (Galaxy Fold, small phones) */
+@media (max-width: 380px) {
+    body {
+        padding: 8px;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    .subtitle {
+        font-size: 0.8rem;
+    }
+
+    .calculator-section {
+        padding: 12px;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 10px 11px;
+    }
+
+    .form-group select {
+        padding-right: 32px;
+        background-position: right 8px center;
+        background-size: 10px;
+    }
+
+    input[type="number"],
+    select {
+        font-size: 16px;
+        padding: 10px 11px;
+    }
+
+    .food-category {
+        padding: 12px;
+    }
+
+    .category-header h4 {
+        font-size: 1rem;
+    }
+
+    .food-name {
+        font-size: 0.82rem;
+    }
+
+    .product-link-btn {
+        font-size: 0.68rem;
+        padding: 4px 8px;
+        min-width: 44px;
+    }
+
+    .nutrition-item {
+        font-size: 0.7rem;
+        padding: 2px 5px;
+    }
+}
+
+/* Ultra-wide phones (Samsung S20 Ultra, etc.) */
+@media (min-width: 400px) and (max-width: 450px) {
+    .calculator-section {
+        padding: 16px;
+    }
+
+    .food-category {
+        padding: 16px;
     }
 }
 
