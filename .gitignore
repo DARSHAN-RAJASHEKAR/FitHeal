@@ -1,5 +1,5 @@
-# API Keys and sensitive configuration
-config.js
+# Environment variables (contains API keys)
+.env
 
 # OS files
 .DS_Store
@@ -15,4 +15,3 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
-config.js
