@@ -20,8 +20,8 @@
  */
 
 const CONFIG = {
-    // Model configuration (DeepSeek-v3.2 - high quality and cost-effective)
-    MODEL_NAME: 'deepseek/deepseek-v3.2',
+    // Model configuration (Google Gemini 2.5 Flash - fastest and most capable)
+    MODEL_NAME: 'google/gemini-2.5-flash',
 
     // Chat configuration
     MAX_TOKENS: 1000,  // Maximum response length (increased for detailed meal plans)

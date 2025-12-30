@@ -23,7 +23,7 @@ export default async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "deepseek/deepseek-v3.2",
+          model: "google/gemini-2.5-flash",
           messages,
           max_tokens: 1000,
           temperature: 0.7,
