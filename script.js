@@ -133,7 +133,8 @@ function calculateDailyKcalIntake(tdee, goal, rate) {
     } else if (goal === 'weight_gain') {
         return Math.round(tdee + kcalAdjustment);
     } else {
-        return tdee; // Maintenance
+        // For stay_healthy or maintenance
+        return tdee;
     }
 }
 
@@ -266,6 +267,8 @@ function displayDetailedResults(weight, bodyFatKg, bodyFatPercent, lbmBoer, lbmF
             goalText = 'Deficit';
         } else if (goal === 'weight_gain' || goal === 'body_building') {
             goalText = 'Surplus';
+        } else if (goal === 'stay_healthy') {
+            goalText = 'Maintenance';
         }
         if (document.getElementById('breakdownGoal')) {
             document.getElementById('breakdownGoal').textContent = goalText;
@@ -377,7 +380,7 @@ document.getElementById('fitnessForm').addEventListener('submit', function(e) {
         return;
     }
 
-    // Validate rate is selected for weight loss or weight gain goals
+    // Validate rate is selected for weight loss or weight gain goals (not needed for stay_healthy)
     if ((goal === 'weight_loss' || goal === 'weight_gain') && !rate) {
         alert('Please select a Weight Change Rate for your goal');
         return;
@@ -460,6 +463,7 @@ document.getElementById('goal').addEventListener('change', function() {
     if (this.value === 'weight_loss' || this.value === 'weight_gain') {
         rateGroup.style.display = 'flex';
     } else {
+        // Hide rate group for stay_healthy and empty selection
         rateGroup.style.display = 'none';
         document.getElementById('rate').value = '';
     }
