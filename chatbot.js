@@ -1310,7 +1310,7 @@ function buildFoodPrompt(dietary, allergies, userQuestion = '') {
     // Build disliked foods context
     let dislikedContext = '';
     if (conversationState.dislikedFoods.length > 0) {
-        dislikedContext = `\n**FOODS USER DISLIKES (EXCLUDED FROM AVAILABLE LIST):**\n`;
+        dislikedContext = `\n**FOODS USER DISLIKES (DO NOT INCLUDE):**\n`;
         conversationState.dislikedFoods.forEach(food => {
             dislikedContext += `- ${food}\n`;
         });
@@ -1330,73 +1330,64 @@ function buildFoodPrompt(dietary, allergies, userQuestion = '') {
     let prompt;
 
     if (isFoodListQuestion || isSimpleFoodQuestion) {
-        // User wants food recommendations with EXACT protein calculations
-        prompt = `You are a precision nutrition coach. Calculate EXACT quantities of high-protein foods to hit the user's protein target.
+        // User wants food recommendations - CLEAN output, no internal reasoning
+        prompt = `You are a precision nutrition coach. Create a clean, practical protein distribution plan.
 
 MY PROFILE:
 - Dietary Preference: ${getDietaryLabel(dietary)}
 - ${allergyText}
-- **PROTEIN TARGET: ${proteinTarget}g (must be within ${proteinMin}g - ${proteinMax}g)**
+- **PROTEIN TARGET: ${proteinTarget}g (acceptable range: ${proteinMin}g - ${proteinMax}g)**
 ${dislikedContext}
 ${foodListContext}
 
-**CRITICAL PROTEIN CALCULATION RULES:**
+**STRICT RULES - FOLLOW EXACTLY:**
 
-1. **CALCULATE EXACT QUANTITIES** to hit the protein target within ±5%
-2. **SHOW CALCULATIONS** for each food item with exact serving size
-3. **SUM TOTAL PROTEIN** at the end and verify it's within ${proteinMin}g - ${proteinMax}g
-4. **ADJUST QUANTITIES** if total protein is outside the range
+1. **PRACTICAL SERVING SIZES ONLY:**
+   - Yogurt/Skyr: Use 100g or 200g ONLY (comes in 100g packs)
+   - Paneer: Use 100g, 150g, or 200g
+   - Soya Chunks: Use 25g, 50g, 75g, or 100g (uncooked)
+   - Protein Atta: Use 50g, 75g, or 100g
+   - Tofu: Use 100g or 200g
+   - Whey Protein: MAXIMUM 1 scoop (30g) - never more than 1 scoop
+   - Dal/Legumes: Use 50g, 100g, or 150g (cooked weight)
+   - Milk: Use 1 cup (240ml) or 2 cups (480ml)
 
-**FOOD SELECTION RULES:**
+2. **PROTEIN CALCULATION:**
+   - Target range is ${proteinMin}g - ${proteinMax}g (±5% of ${proteinTarget}g)
+   - Any total within this range is PERFECT
+   - Do all calculations internally - show only the final plan
+   - DO NOT show revision steps or corrections
 
-1. Use ONLY foods from the "AVAILABLE FOOD LIST" above
-2. Select 4-6 HIGH-PROTEIN foods (prioritize foods with >15g protein per 100g)
-3. Ensure variety - no two similar foods (e.g., don't list 2 yogurts or 2 paneers)
-4. When high-protein foods are excluded (from DISLIKES), **INCREASE QUANTITIES** of remaining high-protein foods to compensate
+3. **FOOD SELECTION:**
+   - Pick 4-6 HIGH-PROTEIN foods from the AVAILABLE FOOD LIST
+   - Prioritize foods with >15g protein per 100g
+   - Include variety - no duplicates (don't list 2 yogurts or 2 types of paneer)
 
-**CALCULATION METHOD:**
+**OUTPUT FORMAT (follow exactly):**
 
-For each food, calculate: (Protein Target ÷ Number of Foods) ÷ (Protein per 100g) × 100g = Serving Size
+**Protein Distribution Plan**
+1. **[Food Name]** - [Quantity]
+Protein: [X]g
 
-**EXAMPLE (if protein target is 132.9g):**
+2. **[Food Name]** - [Quantity]
+Protein: [X]g
 
-**Protein Distribution Plan (Total: 132.9g)**
+3. **[Food Name]** - [Quantity]
+Protein: [X]g
 
-1. **Nutrela Soya Chunks (uncooked)** - 50g
-   - Protein: 26g (52g per 100g × 0.5)
-   - Calories: 175 kcal
+[continue for 4-6 foods with blank line between each item...]
 
-2. **Milky Mist High Protein Paneer** - 200g
-   - Protein: 50g (25g per 100g × 2)
-   - Calories: 408 kcal
+**Total Protein: [X]g**
 
-3. **Mill'D Protein Atta** - 60g
-   - Protein: 27.6g (46g per 100g × 0.6)
-   - Calories: 232 kcal
+**IMPORTANT - DO NOT:**
+- Show calculation formulas or steps
+- Show "revised" or "corrected" versions
+- Explain adjustments or reasoning
+- Apologize for being slightly above/below target
+- Show multiple plan versions
+- Use odd serving sizes (like 70g, 120g, 250g for yogurt)
 
-4. **Briyas Tofu Soy Paneer** - 130g
-   - Protein: 20.3g (15.6g per 100g × 1.3)
-   - Calories: 182 kcal
-
-5. **Milky Mist Skyr Yogurt** - 75g
-   - Protein: 9g (12g per 100g × 0.75)
-   - Calories: 75 kcal
-
-**Total Protein: 132.9g ✓ (within ${proteinMin}g - ${proteinMax}g)**
-**Total Calories: 1,072 kcal**
-
-**RESPONSE FORMAT:**
-
-Start with acknowledgment if user excluded a food, then show:
-- Protein Distribution Plan with exact quantities
-- Protein calculation for each food
-- **Total Protein** (MUST be within ${proteinMin}g - ${proteinMax}g)
-- Total Calories
-
-**VERIFICATION STEP:**
-Before responding, calculate total protein. If outside ${proteinMin}g - ${proteinMax}g range, ADJUST quantities and recalculate.
-
-Keep response under 250 words. Focus on ACCURACY of protein calculations.`;
+Show ONE clean, final plan only. Keep response under 200 words.`;
 
     } else {
         // User wants a full meal plan
@@ -1418,24 +1409,24 @@ INSTRUCTIONS:
 1. **DO NOT include any foods from the DISLIKES list**
 2. **PRIORITIZE foods from the Available Food List above** - these have verified nutrition data
 3. Create a FULL DAY meal plan divided into: Breakfast, Lunch, Dinner, and Snacks (if needed)
-4. Specify EXACT quantities for each food item (use the serving sizes shown above as reference)
+4. Specify EXACT quantities for each food item using practical serving sizes:
+   - Yogurt/Skyr: 100g or 200g only
+   - Paneer: 100g, 150g, or 200g
+   - Whey Protein: Maximum 1 scoop (30g)
 5. Calculate and show macros for each meal in format: (Xg protein, Yg carbs, Zg fat, Z kcal)
-6. **CRITICAL MACRO REQUIREMENTS - Follow these strictly:**
-   - **PROTEIN**: Must be within 95-100% of target (${calculatedMetrics.protein}g). Minimum ${Math.round(calculatedMetrics.protein * 0.95)}g, maximum ${calculatedMetrics.protein}g
-   - **FAT**: Must NOT exceed target (${calculatedMetrics.fat}g). Stay at or below this limit
-   - **CARBS**: Must NOT exceed target (${calculatedMetrics.carbs}g). Stay at or below this limit
-   - **TOTAL CALORIES**: Must NEVER exceed ${calculatedMetrics.dailyKcal} kcal. This is a hard limit
-7. DO NOT include any product links or URLs in your response
-8. If the food list items don't fully cover macro needs, you may suggest additional common Indian foods with estimated macros
-9. Prioritize hitting protein target first, then adjust fats and carbs to stay within calorie limit
+6. **MACRO REQUIREMENTS:**
+   - **PROTEIN**: Within ±5% of target (${proteinMin}g - ${proteinMax}g)
+   - **FAT**: Must NOT exceed ${calculatedMetrics.fat}g
+   - **CARBS**: Must NOT exceed ${calculatedMetrics.carbs}g
+   - **CALORIES**: Must NOT exceed ${calculatedMetrics.dailyKcal} kcal
+7. DO NOT include any product links or URLs
+8. You may suggest common Indian foods if needed to meet macro targets
 
-FORMAT EXAMPLE:
-**Breakfast** (25g protein, 40g carbs, 15g fat, 380 kcal)
-- 100g Milky Mist High Protein Paneer (25g protein, 6g carbs, 9g fat, 204 kcal)
-- 2 slices whole wheat bread (6g protein, 30g carbs, 2g fat, 160 kcal)
-- 1 tsp butter (0g protein, 0g carbs, 5g fat, 45 kcal)
+FORMAT:
+**Breakfast** (Xg protein, Xg carbs, Xg fat, X kcal)
+- [Food item with quantity and macros]
 
-Keep response concise but complete. Focus on practical, achievable meals. Show total macros at the end.`;
+Keep response concise. Show total macros at the end.`;
     }
 
     return prompt;
