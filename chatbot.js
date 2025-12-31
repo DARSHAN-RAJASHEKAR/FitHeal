@@ -329,6 +329,7 @@ function initializeChatbot() {
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('chatSendBtn');
     const minimizeBtn = document.querySelector('.chat-minimize-btn');
+    const floatBtn = document.getElementById('chatbot-float-btn');
 
     // Send message on button click
     sendBtn.addEventListener('click', () => {
@@ -343,16 +344,53 @@ function initializeChatbot() {
         }
     });
 
-    // Minimize/expand chatbot
-    minimizeBtn.addEventListener('click', toggleChatbot);
+    // Close chatbot (show floating button)
+    minimizeBtn.addEventListener('click', () => {
+        hideChatbot();
+        showFloatingButton();
+    });
+
+    // Open chatbot from floating button
+    floatBtn.addEventListener('click', () => {
+        hideFloatingButton();
+        showChatbotWidget();
+    });
 
     console.log('✅ Chatbot initialized');
 }
 
 // ============================================
-// Show Chatbot (after calculation)
+// Show Floating Button (after calculation)
 // ============================================
 function showChatbot() {
+    // After calculation, just show the floating button
+    showFloatingButton();
+}
+
+// ============================================
+// Show Floating Button
+// ============================================
+function showFloatingButton() {
+    const floatBtn = document.getElementById('chatbot-float-btn');
+    if (floatBtn) {
+        floatBtn.classList.remove('hidden');
+    }
+}
+
+// ============================================
+// Hide Floating Button
+// ============================================
+function hideFloatingButton() {
+    const floatBtn = document.getElementById('chatbot-float-btn');
+    if (floatBtn) {
+        floatBtn.classList.add('hidden');
+    }
+}
+
+// ============================================
+// Show Chatbot Widget
+// ============================================
+function showChatbotWidget() {
     const widget = document.getElementById('chatbot-widget');
 
     if (!widget) {
@@ -384,30 +422,6 @@ function hideChatbot() {
     const messagesContainer = document.getElementById('chatMessages');
     if (messagesContainer) {
         messagesContainer.innerHTML = '';
-    }
-}
-
-// ============================================
-// Toggle Chatbot (minimize/expand)
-// ============================================
-function toggleChatbot() {
-    const widget = document.getElementById('chatbot-widget');
-    const messages = document.querySelector('.chat-messages');
-    const inputArea = document.querySelector('.chat-input-area');
-    const minimizeBtn = document.querySelector('.chat-minimize-btn');
-
-    if (widget.classList.contains('minimized')) {
-        // Expand
-        widget.classList.remove('minimized');
-        messages.style.display = 'flex';
-        inputArea.style.display = 'flex';
-        minimizeBtn.textContent = '−';
-    } else {
-        // Minimize
-        widget.classList.add('minimized');
-        messages.style.display = 'none';
-        inputArea.style.display = 'none';
-        minimizeBtn.textContent = '+';
     }
 }
 

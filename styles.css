@@ -1025,6 +1025,44 @@ header h1 {
    AI Chatbot Widget Styling
    ============================================ */
 
+/* Floating Chatbot Button */
+.chatbot-float-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #F97316 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.chatbot-float-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+.chatbot-float-btn:active {
+    transform: scale(0.95);
+}
+
+.chatbot-float-btn.hidden {
+    display: none;
+}
+
+.chatbot-float-btn svg {
+    width: 28px;
+    height: 28px;
+}
+
 /* Chatbot Widget Container */
 .chatbot-widget {
     position: fixed;

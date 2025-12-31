@@ -551,11 +551,18 @@
         </div>
     </div>
 
+    <!-- Floating Chatbot Button -->
+    <button id="chatbot-float-btn" class="chatbot-float-btn hidden" aria-label="Open AI Fitness Coach">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </button>
+
     <!-- AI Chatbot Widget -->
     <div id="chatbot-widget" class="chatbot-widget hidden">
         <div class="chat-header">
             <span class="chat-title">💬 AI Fitness Coach</span>
-            <button class="chat-minimize-btn" aria-label="Minimize chat">−</button>
+            <button class="chat-minimize-btn" aria-label="Close chat">×</button>
         </div>
         <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
         <div class="chat-input-area">
