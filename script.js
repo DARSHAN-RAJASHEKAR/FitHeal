@@ -542,3 +542,247 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ============================================
+// PDF Download Functionality
+// ============================================
+function createInputSummary() {
+    // Get user input values
+    const age = document.getElementById('age')?.value || '-';
+    const gender = document.getElementById('gender')?.value || '-';
+    const weight = document.getElementById('weight')?.value || '-';
+    const height = document.getElementById('height')?.value || '-';
+    const waist = document.getElementById('waist')?.value || '-';
+    const neck = document.getElementById('neck')?.value || '-';
+    const hipElement = document.getElementById('hip');
+    const hip = hipElement ? hipElement.value : '-';
+    const activityLevel = document.getElementById('activityLevel')?.value || '1.2';
+    const goal = document.getElementById('goal')?.value || 'stay_healthy';
+    const rateElement = document.getElementById('rate');
+    const rate = rateElement ? rateElement.value : '';
+
+    // Create activity level description
+    const activityDesc = {
+        '1.2': 'Sedentary (little or no exercise)',
+        '1.375': 'Lightly Active (light exercise 1-3 days/week)',
+        '1.55': 'Moderately Active (moderate exercise 3-5 days/week)',
+        '1.725': 'Very Active (hard exercise 6-7 days/week)',
+        '1.9': 'Extra Active (very hard exercise, physical job)'
+    };
+
+    // Create goal description
+    const goalDesc = {
+        'weight_loss': 'Weight Loss',
+        'weight_gain': 'Weight Gain',
+        'stay_healthy': 'Stay Healthy (Maintenance)'
+    };
+
+    // Create the summary section
+    const summaryDiv = document.createElement('div');
+    summaryDiv.style.marginTop = '0';
+    summaryDiv.style.marginBottom = '15px';
+    summaryDiv.style.padding = '15px';
+    summaryDiv.style.backgroundColor = '#f8f9fa';
+    summaryDiv.style.borderRadius = '8px';
+    summaryDiv.style.border = '2px solid #667eea';
+
+    let summaryHTML = `
+        <h2 style="color: #667eea; margin-top: 0; margin-bottom: 20px; text-align: center;">Your Input Data</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div><strong>Age:</strong> ${age} years</div>
+            <div><strong>Gender:</strong> ${gender.charAt(0).toUpperCase() + gender.slice(1)}</div>
+            <div><strong>Weight:</strong> ${weight} kg</div>
+            <div><strong>Height:</strong> ${height} cm</div>
+            <div><strong>Waist:</strong> ${waist} cm</div>
+            <div><strong>Neck:</strong> ${neck} cm</div>
+    `;
+
+    if (gender === 'female') {
+        summaryHTML += `<div><strong>Hip:</strong> ${hip} cm</div>`;
+    }
+
+    summaryHTML += `
+            <div><strong>Activity Level:</strong> ${activityDesc[activityLevel]}</div>
+            <div><strong>Goal:</strong> ${goalDesc[goal]}</div>
+    `;
+
+    if (rate) {
+        summaryHTML += `<div><strong>Target Rate:</strong> ${rate} kg/week</div>`;
+    }
+
+    summaryHTML += `</div>`;
+
+    summaryDiv.innerHTML = summaryHTML;
+    return summaryDiv;
+}
+
+document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+    generatePDF();
+});
+
+function generatePDF() {
+    const button = document.getElementById('downloadPdfBtn');
+
+    // Disable button during generation
+    button.disabled = true;
+    button.querySelector('.pdf-text').textContent = 'Generating PDF...';
+
+    // Get both results sections
+    const basicResults = document.getElementById('results');
+    const detailedResults = document.getElementById('detailedResults');
+
+    // Create a wrapper for both sections
+    const pdfWrapper = document.createElement('div');
+    pdfWrapper.style.padding = '10px';
+    pdfWrapper.style.margin = '0 auto';
+    pdfWrapper.style.backgroundColor = '#fff';
+    pdfWrapper.style.width = '700px';
+    pdfWrapper.style.transform = 'scale(0.98)';
+    pdfWrapper.style.transformOrigin = 'top left';
+
+    // Create user input summary section
+    const inputSummary = createInputSummary();
+
+    // Clone both sections
+    const clonedBasic = basicResults.cloneNode(true);
+    const clonedDetailed = detailedResults.cloneNode(true);
+
+    // Remove hidden class and reset margins/padding
+    clonedBasic.classList.remove('hidden');
+    clonedBasic.style.marginTop = '0';
+    clonedBasic.style.paddingTop = '10px';
+
+    clonedDetailed.classList.remove('hidden');
+    clonedDetailed.style.marginTop = '10px';
+    clonedDetailed.style.paddingTop = '20px';
+
+    // Make macronutrient boxes smaller and arrange in 3 columns for PDF
+    const macrosGrid = clonedDetailed.querySelector('.macros-grid');
+    if (macrosGrid) {
+        macrosGrid.style.display = 'grid';
+        macrosGrid.style.gridTemplateColumns = '1fr 1fr 1fr';
+        macrosGrid.style.gap = '15px';
+        macrosGrid.style.marginTop = '20px';
+        macrosGrid.style.pageBreakAfter = 'always';
+        macrosGrid.style.marginBottom = '40px';
+    }
+
+    const macroCards = clonedDetailed.querySelectorAll('.macro-card');
+    macroCards.forEach(card => {
+        card.style.padding = '20px 15px';
+        card.style.minHeight = '180px';
+        card.style.height = 'auto';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.justifyContent = 'center';
+        card.style.alignItems = 'center';
+        card.style.overflow = 'visible';
+    });
+
+    const macroIcons = clonedDetailed.querySelectorAll('.macro-icon');
+    macroIcons.forEach(icon => {
+        icon.style.fontSize = '2.5rem';
+        icon.style.marginBottom = '10px';
+    });
+
+    const macroValues = clonedDetailed.querySelectorAll('.macro-value');
+    macroValues.forEach(value => {
+        value.style.fontSize = '2rem';
+        value.style.fontWeight = 'bold';
+        value.style.marginBottom = '5px';
+        value.style.marginTop = '5px';
+    });
+
+    const macroTitles = clonedDetailed.querySelectorAll('.macro-card h4');
+    macroTitles.forEach(title => {
+        title.style.fontSize = '1.1rem';
+        title.style.fontWeight = '600';
+        title.style.marginBottom = '10px';
+        title.style.marginTop = '0';
+    });
+
+    const macroUnits = clonedDetailed.querySelectorAll('.macro-unit');
+    macroUnits.forEach(unit => {
+        unit.style.fontSize = '0.9rem';
+        unit.style.marginBottom = '3px';
+    });
+
+    const macroKcals = clonedDetailed.querySelectorAll('.macro-kcal');
+    macroKcals.forEach(kcal => {
+        kcal.style.fontSize = '0.85rem';
+        kcal.style.marginTop = '2px';
+    });
+
+    // Add page break before Detailed Breakdown section
+    const detailedH2 = clonedDetailed.querySelector('h2');
+    if (detailedH2 && detailedH2.textContent.includes('Detailed Breakdown')) {
+        detailedH2.style.pageBreakBefore = 'always';
+        detailedH2.style.paddingTop = '60px';
+        detailedH2.style.marginTop = '0';
+    }
+
+    // Remove the reset button from basic results
+    const resetBtn = clonedBasic.querySelector('.reset-btn');
+    if (resetBtn) {
+        resetBtn.remove();
+    }
+
+    // Remove the PDF download button from detailed results
+    const pdfSection = clonedDetailed.querySelector('.pdf-download-section');
+    if (pdfSection) {
+        pdfSection.remove();
+    }
+
+    // Remove the High Protein Food Sources section from PDF
+    const foodListSection = clonedDetailed.querySelector('.food-list-section');
+    if (foodListSection) {
+        foodListSection.remove();
+    }
+
+    // Add all sections to wrapper (input summary first, then results)
+    pdfWrapper.appendChild(inputSummary);
+    pdfWrapper.appendChild(clonedBasic);
+    pdfWrapper.appendChild(clonedDetailed);
+
+    // Use the wrapper for PDF generation
+    const clonedResults = pdfWrapper;
+
+    // Generate filename with current date
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const filename = `FitHeal_Report_${day}_${month}_${year}.pdf`;
+
+    // Configure PDF options
+    const opt = {
+        margin: [8, 8, 8, 8],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            scrollY: 0,
+            scrollX: 0
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // Generate PDF
+    html2pdf().set(opt).from(clonedResults).save().then(() => {
+        // Re-enable button after generation
+        button.disabled = false;
+        button.querySelector('.pdf-text').textContent = 'Download Full Report (PDF)';
+    }).catch((error) => {
+        console.error('PDF generation error:', error);
+        alert('Failed to generate PDF. Please try again.');
+        button.disabled = false;
+        button.querySelector('.pdf-text').textContent = 'Download Full Report (PDF)';
+    });
+}
+
