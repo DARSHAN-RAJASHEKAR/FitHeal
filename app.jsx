@@ -111,13 +111,40 @@ function Header({ tab, setTab, calculated }) {
 // --------- Calculator screen ---------
 function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
   const [form, setForm] = useState(input);
-  const set = (patch) => setForm({ ...form, ...patch });
+  const [errors, setErrors] = useState({});
+  const [tried, setTried] = useState(false);
+
+  const set = (patch) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    if (tried) {
+      const cleared = {};
+      Object.keys(patch).forEach(k => { if (next[k]) cleared[k] = false; });
+      setErrors(prev => ({ ...prev, ...cleared }));
+    }
+  };
+
   const submit = (e) => {
     e?.preventDefault();
-    if (!form.age || !form.weight || !form.height || !form.gender || !form.activity || !form.goal) return;
+    const errs = {
+      age: !form.age,
+      gender: !form.gender,
+      weight: !form.weight,
+      height: !form.height,
+      activity: !form.activity,
+      goal: !form.goal,
+    };
+    if (Object.values(errs).some(Boolean)) {
+      setErrors(errs);
+      setTried(true);
+      return;
+    }
+    setErrors({});
     onCompute({ ...form, neck: form.neck || null, waist: form.waist || null, hip: form.hip || null });
   };
+
   const showRate = form.goal === "weight_loss" || form.goal === "weight_gain";
+  const missingCount = Object.values(errors).filter(Boolean).length;
 
   return (
     <div className="fade-in">
@@ -144,26 +171,25 @@ function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
         </div>
 
         <div className="form-grid">
-          <Field className="col-3" label="Age">
-            <div className="input-wrap">
-              <input className="input with-suffix" type="number" min="1" max="120" required value={form.age || ""} onChange={(e) => set({ age: +e.target.value || null })} />
+          <Field className="col-3" label="Age" error={errors.age}>
+            <div className={`input-wrap${errors.age ? " field-err" : ""}`}>
+              <input className="input with-suffix" type="number" min="1" max="120" value={form.age || ""} onChange={(e) => set({ age: +e.target.value || null })} />
               <span className="suffix">Y</span>
             </div>
           </Field>
-          <Field className="col-3" label="Gender">
-            <div className="segmented">
+          <Field className="col-3" label="Gender" error={errors.gender}>
+            <div className={`segmented${errors.gender ? " field-err" : ""}`}>
               <button type="button" aria-pressed={form.gender === "male"} onClick={() => set({ gender: "male" })}>Male</button>
               <button type="button" aria-pressed={form.gender === "female"} onClick={() => set({ gender: "female" })}>Female</button>
             </div>
           </Field>
-          <Field className="col-3" label="Weight">
-            <div className="input-wrap">
+          <Field className="col-3" label="Weight" error={errors.weight}>
+            <div className={`input-wrap${errors.weight ? " field-err" : ""}`}>
               <input
                 className="input with-toggle"
                 type="number"
                 min="1"
                 step="0.1"
-                required
                 value={form.weight ? (weightUnit === "kg" ? form.weight : Math.round(form.weight * 2.20462 * 10) / 10) : ""}
                 onChange={(e) => {
                   const v = +e.target.value;
@@ -178,15 +204,15 @@ function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
               </div>
             </div>
           </Field>
-          <Field className="col-3" label="Height">
-            <div className="input-wrap">
-              <input className="input with-suffix" type="number" min="1" step="0.1" required value={form.height || ""} onChange={(e) => set({ height: +e.target.value || null })} />
+          <Field className="col-3" label="Height" error={errors.height}>
+            <div className={`input-wrap${errors.height ? " field-err" : ""}`}>
+              <input className="input with-suffix" type="number" min="1" step="0.1" value={form.height || ""} onChange={(e) => set({ height: +e.target.value || null })} />
               <span className="suffix">cm</span>
             </div>
           </Field>
 
-          <Field className="col-12" label="Activity level">
-            <div className="option-cards">
+          <Field className="col-12" label="Activity level" error={errors.activity}>
+            <div className={`option-cards${errors.activity ? " field-err" : ""}`}>
               {[
                 { v: 1.2, n: "Sedentary", d: "Little / no exercise" },
                 { v: 1.375, n: "Light", d: "1–3 days exercise / week" },
@@ -202,8 +228,8 @@ function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
             </div>
           </Field>
 
-          <Field className={showRate ? "col-6" : "col-12"} label="Goal">
-            <div className="option-cards" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <Field className={showRate ? "col-6" : "col-12"} label="Goal" error={errors.goal}>
+            <div className={`option-cards${errors.goal ? " field-err" : ""}`} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {[
                 { v: "weight_loss", n: "Lose", d: "Caloric deficit" },
                 { v: "stay_healthy", n: "Maintain", d: "At maintenance" },
@@ -256,24 +282,37 @@ function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
           </Field>
         </div>
 
+        {missingCount > 0 && (
+          <div className="form-error-banner">
+            Please fill in {missingCount === 1 ? "1 required field" : `${missingCount} required fields`} before computing —&nbsp;
+            {[
+              errors.age && "Age",
+              errors.gender && "Gender",
+              errors.weight && "Weight",
+              errors.height && "Height",
+              errors.activity && "Activity level",
+              errors.goal && "Goal",
+            ].filter(Boolean).join(", ")}.
+          </div>
+        )}
         <div className="button-row">
           <button type="submit" className="button primary">
             Compute metrics
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
           </button>
-          <button type="button" className="button ghost" onClick={() => setForm({ age: null, gender: null, weight: null, height: null, activity: null, goal: null, rate: null, neck: null, waist: null, hip: null })}>Reset</button>
+          <button type="button" className="button ghost" onClick={() => { setForm({ age: null, gender: null, weight: null, height: null, activity: null, goal: null, rate: null, neck: null, waist: null, hip: null }); setErrors({}); setTried(false); }}>Reset</button>
         </div>
       </form>
     </div>
   );
 }
 
-function Field({ label, hint, className, children }) {
+function Field({ label, hint, error, className, children }) {
   return (
     <div className={`field ${className || ""}`}>
       <div className="field-label">
         <span>{label}</span>
-        {hint && <span className="hint">{hint}</span>}
+        {error ? <span className="hint err-hint">Required</span> : hint && <span className="hint">{hint}</span>}
       </div>
       {children}
     </div>
@@ -1209,9 +1248,15 @@ function downloadReport(m, weightUnit = "kg") {
       jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["css", "legacy"] },
     };
-    window.html2pdf().set(opts).from(node).save()
-      .then(() => { if (node.parentNode) document.body.removeChild(node); })
-      .catch(() => { if (node.parentNode) document.body.removeChild(node); });
+    const cleanup = () => { if (node.parentNode) document.body.removeChild(node); };
+    window.html2pdf().set(opts).from(node).toPdf().get('pdf').then(pdf => {
+      // Remove trailing blank page caused by sub-pixel height overflow
+      const total = pdf.internal.getNumberOfPages();
+      if (total > 1) {
+        const lastPageContent = (pdf.internal.pages[total] || []).join('');
+        if (lastPageContent.replace(/\s/g, '').length < 100) pdf.deletePage(total);
+      }
+    }).save().then(cleanup).catch(cleanup);
   }, 300);
 }
 
