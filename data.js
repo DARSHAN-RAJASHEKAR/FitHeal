@@ -1,0 +1,32 @@
+// Food data — extracted from original FitHeal
+window.FOOD_DATA = [
+  // Vegetarian
+  { name: "Milky Mist Fresh Paneer", serving: "100g", type: "veg", kcal: 265, protein: 18, carbs: 3, fat: 20, link: "https://shop.milkymist.com/pn/fresh-paneer/pid/3519870" },
+  { name: "Milky Mist High Protein Paneer", serving: "100g", type: "veg", kcal: 204, protein: 25, carbs: 6, fat: 9, link: "https://shop.milkymist.com/pn/high-protien-paneer/pid/3892403" },
+  { name: "Mill'D Protein Atta", serving: "100g", type: "veg", kcal: 387, protein: 46, carbs: 45, fat: 2, link: "https://milld.com/products/milld-high-protein-atta-1kg?variant=50830533951704" },
+  { name: "Milky Mist Greek Yogurt", serving: "100g", type: "veg", kcal: 74, protein: 7, carbs: 7, fat: 2, link: "https://shop.milkymist.com/pn/greek-yogurt-natural/pid/3519837" },
+  { name: "Milky Mist Skyr Yogurt", serving: "100g", type: "veg", kcal: 100, protein: 12, carbs: 10, fat: 2, link: "https://shop.milkymist.com/pn/skyr-yogurt/pid/3519887" },
+  { name: "Athena Greek Yogurt High Protein", serving: "100g", type: "veg", kcal: 99, protein: 11, carbs: 6, fat: 4, link: "https://www.athenaprotein.com/products/high-protein-plain" },
+  { name: "Masoor Dal Whole", serving: "100g cooked", type: "veg", kcal: 115, protein: 8, carbs: 20, fat: 0 },
+  { name: "Moong Dal", serving: "100g cooked", type: "veg", kcal: 110, protein: 8, carbs: 19, fat: 0 },
+  { name: "Urad Dal Kali", serving: "100g cooked", type: "veg", kcal: 112, protein: 8, carbs: 20, fat: 1 },
+  { name: "Kabuli Chana", serving: "100g cooked", type: "veg", kcal: 123, protein: 8, carbs: 21, fat: 2 },
+  { name: "Red Rajma", serving: "100g cooked", type: "veg", kcal: 123, protein: 8, carbs: 21, fat: 1 },
+  { name: "Briyas Tofu Soy Paneer", serving: "100g", type: "veg", kcal: 140, protein: 15.6, carbs: 7, fat: 5, link: "https://shop.milkymist.com/pn/tofu-soy-paneer/pid/3519776" },
+  { name: "Nutrela Soya Chunks", serving: "100g uncooked", type: "veg", kcal: 350, protein: 52, carbs: 33, fat: 0.5, link: "https://mynutrela.com/soya-chunks/" },
+  { name: "Quinoa", serving: "100g cooked", type: "veg", kcal: 120, protein: 4, carbs: 21, fat: 2 },
+  { name: "Almonds", serving: "30g", type: "veg", kcal: 170, protein: 6, carbs: 6, fat: 15 },
+  { name: "Milk", serving: "1 cup", type: "veg", kcal: 149, protein: 8, carbs: 12, fat: 8 },
+  { name: "Peanut Butter", serving: "2 tbsp", type: "veg", kcal: 188, protein: 8, carbs: 7, fat: 16 },
+  // Non-vegetarian
+  { name: "Chicken Breast", serving: "100g", type: "nonveg", kcal: 165, protein: 31, carbs: 0, fat: 4 },
+  { name: "Eggs", serving: "1 large", type: "nonveg", kcal: 72, protein: 6, carbs: 0, fat: 5 },
+  { name: "Salmon", serving: "100g", type: "nonveg", kcal: 208, protein: 25, carbs: 0, fat: 13 },
+  { name: "Tuna", serving: "100g", type: "nonveg", kcal: 132, protein: 30, carbs: 0, fat: 1 },
+  { name: "Turkey Breast", serving: "100g", type: "nonveg", kcal: 135, protein: 29, carbs: 0, fat: 1 },
+  { name: "Prawns", serving: "100g", type: "nonveg", kcal: 99, protein: 24, carbs: 0, fat: 0 },
+  { name: "Tilapia", serving: "100g", type: "nonveg", kcal: 129, protein: 26, carbs: 0, fat: 3 },
+  { name: "Lamb", serving: "100g", type: "nonveg", kcal: 294, protein: 25, carbs: 0, fat: 21 },
+  { name: "Lean Beef", serving: "100g", type: "nonveg", kcal: 250, protein: 26, carbs: 0, fat: 17 },
+  { name: "Pork Chop", serving: "100g", type: "nonveg", kcal: 231, protein: 27, carbs: 0, fat: 13 },
+];

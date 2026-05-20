@@ -5,7 +5,7 @@ export default async (req) => {
     }
 
     const { messages } = await req.json();
-    
+
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return new Response(
