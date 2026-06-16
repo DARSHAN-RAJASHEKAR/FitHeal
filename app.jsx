@@ -85,7 +85,7 @@ function Header({ tab, setTab, calculated }) {
     { id: "calculator", label: "Calculator", icon: ICONS.calc },
     { id: "dashboard", label: "Dashboard", icon: ICONS.chart },
     { id: "nutrition", label: "Nutrition", icon: ICONS.leaf },
-    { id: "coach", label: "Coach", icon: ICONS.msg },
+    { id: "coach", label: "AI Coach", icon: ICONS.msg },
   ];
   return (
     <header className="app-header">
@@ -734,9 +734,16 @@ function parseMarkdown(text) {
 // --------- Coach helpers ---------
 function detectFoodIntent(msg) {
   const kws = ['food','meal','eat','diet','nutrition','recipe','breakfast','lunch','dinner','snack',
-    'protein','calories','cook','dish','vegetarian','vegan','non-veg','plan','menu',
-    'carb','fat','macro','calorie','intake','consume','grocery','ingredient'];
+    'cook','dish','vegetarian','vegan','non-veg','menu','grocery','ingredient',
+    'what to eat','what should i eat','meal plan','food plan','calorie intake','protein intake',
+    'macro breakdown','daily intake','what can i eat','food suggestion','food recommend'];
+  // Training/recovery context overrides food detection
+  const trainingKws = ['sleep','workout','exercise','training','muscle','strength','program',
+    'sets','reps','cardio','recovery','rest day','lifting','progressive overload',
+    'fat loss','weight loss','body fat','burn fat','lose fat','lose weight','gain muscle',
+    'hypertrophy','plateau','split','frequency','volume','myo','hiit','liss'];
   const lower = msg.toLowerCase();
+  if (trainingKws.some(k => lower.includes(k))) return false;
   const hasFoodKw = kws.some(k => lower.includes(k));
   const isQ = lower.includes('?') || /^(what|which|how|can)/.test(lower) ||
     lower.includes('should i') || lower.includes('can i') ||
@@ -845,11 +852,15 @@ Personalized Nutrition Plan:
 Please provide advice tailored to this specific profile.`;
 }
 
-function buildCoachSystemPrompt(metrics, calculated) {
+function buildCoachSystemPrompt(metrics, calculated, knowledgeBase) {
   const ctx = calculated ? buildAIContext(metrics) : 'No fitness data available.';
+  const kbSection = knowledgeBase
+    ? `\n\n---\nFITNESS KNOWLEDGE BASE (use this as your reference to answer training, workout, and exercise questions):\n\n${knowledgeBase}\n---`
+    : '';
   return `You are a knowledgeable fitness coach and nutritionist. You are helping a user with their fitness journey.
 
 ${ctx}
+${kbSection}
 
 IMPORTANT INSTRUCTIONS:
 - **ONLY answer questions related to HUMAN fitness, health, nutrition, exercise, wellness, and related topics**
@@ -862,6 +873,7 @@ IMPORTANT INSTRUCTIONS:
 - Be practical and actionable
 - Avoid repetition
 - Use simple language and avoid medical jargon
+- When answering training/workout questions, draw from the FITNESS KNOWLEDGE BASE above
 
 Provide helpful, personalized advice based on their fitness profile.`;
 }
@@ -980,8 +992,8 @@ Keep response concise. Show total macros at the end.`;
 function CoachScreen({ metrics, calculated }) {
   const [messages, setMessages] = useState(() => [
     { role: "assistant", text: calculated
-      ? `Hi — I've got your numbers loaded (TDEE ${metrics.tdee.toLocaleString()} kcal, target ${metrics.dailyKcal.toLocaleString()} kcal, ${metrics.protein}g protein). Ask me anything about hitting them.`
-      : "Hi — fill in the calculator first and I'll have your numbers loaded for tailored advice. Or ask a general question." },
+      ? `Hi, I've got your numbers loaded (TDEE ${metrics.tdee.toLocaleString()} kcal, target ${metrics.dailyKcal.toLocaleString()} kcal, ${metrics.protein}g protein). Ask me anything about hitting them.`
+      : "Hi, fill in the calculator first and I'll have your numbers loaded for tailored advice." },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -992,6 +1004,16 @@ function CoachScreen({ metrics, calculated }) {
   const [originalQuestion, setOriginalQuestion] = useState("");
   const convHistory = useRef([]);
   const scroller = useRef(null);
+  const kbRef = useRef(null);
+
+  // Fetch the fitness knowledge base once on mount; cached by browser after first load
+  useEffect(() => {
+    if (kbRef.current) return;
+    fetch('/fitness-knowledge-base.md')
+      .then(r => r.text())
+      .then(text => { kbRef.current = text; })
+      .catch(() => {}); // silently ignore — coach works without it
+  }, []);
 
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
@@ -1060,7 +1082,7 @@ function CoachScreen({ metrics, calculated }) {
       const newDisliked = dislikedFoods.includes(dislikedFood) ? dislikedFoods : [...dislikedFoods, dislikedFood];
       setDislikedFoods(newDisliked);
       const prompt = buildFoodPrompt(dietaryPref, userAllergies, "What foods should I eat to hit my protein goal?", metrics, newDisliked);
-      const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated) };
+      const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated, kbRef.current) };
       await callCoach([sysMsg, ...convHistory.current, { role: "user", content: prompt }], next);
       return;
     }
@@ -1071,7 +1093,7 @@ function CoachScreen({ metrics, calculated }) {
       setUserAllergies(allergyVal);
       setAwaitingResponse(null);
       const prompt = buildFoodPrompt(dietaryPref, allergyVal, originalQuestion, metrics, dislikedFoods);
-      const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated) };
+      const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated, kbRef.current) };
       await callCoach([sysMsg, ...convHistory.current, { role: "user", content: prompt }], next);
       return;
     }
@@ -1097,13 +1119,13 @@ function CoachScreen({ metrics, calculated }) {
     // 4. Food intent: dietary pref already known → build food prompt directly
     if (detectFoodIntent(text) && dietaryPref) {
       const prompt = buildFoodPrompt(dietaryPref, userAllergies, text, metrics, dislikedFoods);
-      const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated) };
+      const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated, kbRef.current) };
       await callCoach([sysMsg, ...convHistory.current, { role: "user", content: prompt }], next);
       return;
     }
 
     // 5. Normal conversation with full history + system prompt
-    const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated) };
+    const sysMsg = { role: "system", content: buildCoachSystemPrompt(metrics, calculated, kbRef.current) };
     await callCoach([sysMsg, ...convHistory.current], next);
   }, [input, busy, messages, awaitingResponse, dietaryPref, userAllergies, dislikedFoods, originalQuestion, metrics, calculated, callCoach]);
 
@@ -1112,7 +1134,7 @@ function CoachScreen({ metrics, calculated }) {
     "How do I split protein across the day?",
     "Cardio vs. lifting for my goal?",
     "Why is my body fat % what it is?",
-    "What if I plateau?",
+    "Why am I not losing weight despite dieting?",
   ];
 
   return (
@@ -1120,18 +1142,18 @@ function CoachScreen({ metrics, calculated }) {
       <div style={{ marginBottom: 24 }}>
         <p className="eyebrow">04 · Coach</p>
         <h1 className="display" style={{ fontSize: 'clamp(36px,4.6vw,52px)', marginBottom: 8 }}>Ask your coach.</h1>
-        <p className="lede">Your numbers are passed along automatically. Get a plan, debug a plateau, or sanity-check what you're eating.</p>
+        <p className="lede">Your numbers are passed along automatically. Get a workout plan, ask why your progress has stalled, or check if your diet is on track.</p>
       </div>
       <div className="coach-shell">
         <div className="chat-pane">
           <div className="chat-head">
-            <span className="name">FitHeal Coach</span>
+            <span className="name">FitHeal AI Coach</span>
             <span className="status">Online</span>
           </div>
           <div className="messages" ref={scroller}>
             {messages.map((m, i) => (
               <div key={i} className={`msg ${m.role === "choices" ? "assistant" : m.role}`}>
-                <span className="role">{m.role === "user" ? "You" : "Coach"}</span>
+                <span className="role">{m.role === "user" ? "You" : "AI Coach"}</span>
                 <div className="bubble">
                   {m.role === "user"
                     ? m.text
@@ -1191,6 +1213,7 @@ function CoachScreen({ metrics, calculated }) {
           </div>
         </aside>
       </div>
+      <p style={{ fontSize: 11, color: 'var(--ink-3)', textAlign: 'center', margin: '8px 0 0', letterSpacing: '0.01em', marginRight: 'calc(280px + 14px)' }}>AI can make mistakes. Always verify important health decisions with a professional.</p>
     </div>
   );
 }
