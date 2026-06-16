@@ -152,7 +152,7 @@ function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
         <div>
           <p className="eyebrow">01 · Inputs</p>
           <h1 className="display">Your numbers,<br /><em>made legible.</em></h1>
-          <p className="lede">Enter the basics. We compute BMI, BMR, TDEE, lean mass, body fat, daily calories and macro targets — then surface the actionable handful you actually need.</p>
+          <p className="lede">Enter the basics. We compute BMI, BMR, TDEE, lean mass, body fat, daily calories and macro targets - then surface the actionable handful you actually need.</p>
         </div>
         <div className="hero-stats">
           <div className="hero-stat"><span className="num">4</span><div className="label">Core metrics</div></div>
@@ -284,7 +284,7 @@ function CalculatorScreen({ input, onCompute, weightUnit, setWeightUnit }) {
 
         {missingCount > 0 && (
           <div className="form-error-banner">
-            Please fill in {missingCount === 1 ? "1 required field" : `${missingCount} required fields`} before computing —&nbsp;
+            Please fill in {missingCount === 1 ? "1 required field" : `${missingCount} required fields`} before computing -&nbsp;
             {[
               errors.age && "Age",
               errors.gender && "Gender",
@@ -403,7 +403,7 @@ function DashboardScreen({ metrics, fresh, onRecompute, weightUnit }) {
               </div>
               <div className="target-rows">
                 <div className="target-row"><span className="lbl">TDEE</span><span className="vl">{m.tdee.toLocaleString()}</span></div>
-                <div className="target-row"><span className="lbl">Adjustment</span><span className={`vl ${m.dailyKcal < m.tdee ? "minus" : m.dailyKcal > m.tdee ? "plus" : ""}`}>{m.dailyKcal === m.tdee ? "—" : `${m.dailyKcal > m.tdee ? "+" : ""}${(m.dailyKcal - m.tdee).toLocaleString()}`}</span></div>
+                <div className="target-row"><span className="lbl">Adjustment</span><span className={`vl ${m.dailyKcal < m.tdee ? "minus" : m.dailyKcal > m.tdee ? "plus" : ""}`}>{m.dailyKcal === m.tdee ? "-" : `${m.dailyKcal > m.tdee ? "+" : ""}${(m.dailyKcal - m.tdee).toLocaleString()}`}</span></div>
                 <div className="target-row"><span className="lbl">Goal</span><span className="vl">{goalLabel(m.input.goal)}{m.input.rate ? ` · ${wt(m.input.rate, 2)} ${u}/wk` : ""}</span></div>
               </div>
             </div>
@@ -461,7 +461,7 @@ function projectionDelta(m, weeks) {
   return ((m.dailyKcal - m.tdee) * 7 * weeks) / 7700;
 }
 function goalLabel(g) {
-  return { weight_loss: "Lose weight", weight_gain: "Gain weight", stay_healthy: "Maintain" }[g] || "—";
+  return { weight_loss: "Lose weight", weight_gain: "Gain weight", stay_healthy: "Maintain" }[g] || "-";
 }
 
 function MetricCard({ label, value, unit, sub }) {
@@ -654,7 +654,7 @@ function NutritionScreen({ target }) {
         <div>
           <p className="eyebrow">03 · Nutrition</p>
           <h1 className="display" style={{ fontSize: 'clamp(36px,4.6vw,52px)', marginBottom: 8 }}>High-protein sources.</h1>
-          <p className="lede">Curated list — every entry shows kcal, protein, carbs, fat per serving. Sort by protein density to find the most efficient picks for your{target ? ` ${target}g/day target` : " target"}.</p>
+          <p className="lede">Curated list - every entry shows kcal, protein, carbs, fat per serving. Sort by protein density to find the most efficient picks for your{target ? ` ${target}g/day target` : " target"}.</p>
         </div>
       </div>
 
@@ -1012,7 +1012,7 @@ function CoachScreen({ metrics, calculated }) {
     fetch('/fitness-knowledge-base.md')
       .then(r => r.text())
       .then(text => { kbRef.current = text; })
-      .catch(() => {}); // silently ignore — coach works without it
+      .catch(() => {}); // silently ignore - coach works without it
   }, []);
 
   useEffect(() => {
@@ -1063,7 +1063,7 @@ function CoachScreen({ metrics, calculated }) {
     }
     setInput("");
 
-    // 0. Awaiting dietary choice via buttons — typed input only escapes via non-food topic
+    // 0. Awaiting dietary choice via buttons - typed input only escapes via non-food topic
     if (awaitingResponse === "dietary_preference") {
       const nonFoodKws = ['workout', 'exercise', 'training', 'cardio', 'lift', 'gym', 'run'];
       if (!nonFoodKws.some(kw => text.toLowerCase().includes(kw))) return;
@@ -1136,6 +1136,14 @@ function CoachScreen({ metrics, calculated }) {
     "Why is my body fat % what it is?",
     "Why am I not losing weight despite dieting?",
   ];
+  const sidebarPrompts = [
+    "How do I get started?",
+    "How do I build muscle while losing fat?",
+    "How do I recover?",
+    "How many sets and reps should I do?",
+    "What should I eat before a workout?",
+    "What supplements are worth taking?",
+  ];
 
   return (
     <div className="fade-in">
@@ -1190,6 +1198,7 @@ function CoachScreen({ metrics, calculated }) {
             </button>
           </form>
         </div>
+        <p className="coach-disclaimer">AI can make mistakes. Always verify important health decisions with a professional.</p>
         <aside className="context-card">
           <h3 style={{ marginBottom: 14 }}>Your context</h3>
           {calculated ? (
@@ -1207,13 +1216,12 @@ function CoachScreen({ metrics, calculated }) {
           )}
           <h3 style={{ marginTop: 22, marginBottom: 8 }}>Prompts</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {suggestions.map((s, i) => (
+            {sidebarPrompts.map((s, i) => (
               <button key={i} onClick={() => send(s)} style={{ appearance: 'none', textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, padding: '8px 12px', font: 'inherit', fontSize: 12.5, color: 'var(--ink-2)', cursor: 'pointer' }}>{s}</button>
             ))}
           </div>
         </aside>
       </div>
-      <p style={{ fontSize: 11, color: 'var(--ink-3)', textAlign: 'center', margin: '8px 0 0', letterSpacing: '0.01em', marginRight: 'calc(280px + 14px)' }}>AI can make mistakes. Always verify important health decisions with a professional.</p>
     </div>
   );
 }
@@ -1235,7 +1243,7 @@ function Dots() {
 function Footer() {
   return (
     <div className="disclaimer">
-      <span className="copy">FitHeal · educational tool — not medical advice</span>
+      <span className="copy">FitHeal · educational tool - not medical advice</span>
     </div>
   );
 }
@@ -1289,7 +1297,7 @@ function renderReportHTML(m, weightUnit = "kg") {
   const wt = (kg, d = 1) => fmtWeight(kg, weightUnit, d);
   const date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
   const activityLabel = ({ 1.2: "Sedentary", 1.375: "Light", 1.55: "Moderate", 1.725: "Very Active", 1.9: "Extra Active" })[i.activity] || `×${i.activity}`;
-  const goalText = { weight_loss: "Lose weight", weight_gain: "Gain weight", stay_healthy: "Maintain" }[i.goal] || "—";
+  const goalText = { weight_loss: "Lose weight", weight_gain: "Gain weight", stay_healthy: "Maintain" }[i.goal] || "-";
   const adj = m.dailyKcal - m.tdee;
   const css = `
     .rpt { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1c1a14; background: #fff; padding: 48px 56px; }
